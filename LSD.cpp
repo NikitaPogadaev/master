@@ -1,4 +1,4 @@
-﻿#include <iostream>
+#include <iostream>
 #include <algorithm>
 #include <utility>
 #include<cstdlib>
@@ -7,7 +7,6 @@
 #include <string>
 #include <set>
 
-const long long DBS = 1000000;
 using namespace std;
 bool cmp(int a, int b) { return a < b; }
 
@@ -17,21 +16,24 @@ bool cmp(int a, int b) { return a < b; }
 void LSD(std::vector<long long>& ch1) {
     long long co = 1;
     vector<long long>ch;
-    vector<pair<long long, long long>>AB[2];
+    vector<pair<long long, long long>>AB[256];
     for (int i = 0; i < ch1.size(); i++)AB[0].push_back({ ch1[i],i });
-    while (co < 65) {
-        vector<pair<long long, long long>>ab[2];
-        for (auto i : AB[0])ab[i.first % 2].push_back({ i.first / 2,i.second });
-        while (AB[0].size() > 0)AB[0].pop_back();
-        for (auto i : AB[1])ab[i.first % 2].push_back({ i.first / 2,i.second });
-        while (AB[1].size() > 0)AB[1].pop_back();
+    while (co < 9) {
+        vector<pair<long long, long long>>ab[256];
 
-        for (auto i : ab[0])AB[0].push_back(i);
-        for (auto i : ab[1])AB[1].push_back(i);
+        for (int j = 0; j < 256; j++) {
+            for (auto i : AB[j])ab[i.first & 255].push_back({ i.first >> 8,i.second });
+            while (AB[j].size() > 0)AB[j].pop_back();
+        }
+
+        for (int j = 0; j < 256; j++) {
+            for (auto i : ab[j])AB[j].push_back(i);
+        }
         co++;
     }
-    for (auto i : AB[0])ch.push_back(ch1[i.second]);
-    for (auto i : AB[1])ch.push_back(ch1[i.second]);
+    for (int j = 0; j < 256; j++) {
+        for (auto i : AB[j])ch.push_back(ch1[i.second]);
+    }
 
     for (int i = 0; i < ch.size(); i++)ch1[i] = ch[i];
 }
@@ -52,7 +54,6 @@ int main()
         std::cin >> m;
         ch.push_back(m);
     }
-    long long temp = 4 << 2;
     LSD(ch);
     for (auto i : ch)cout << i << " ";
 }

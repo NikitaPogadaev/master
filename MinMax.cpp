@@ -6,7 +6,7 @@
 #include<assert.h>
 #include <string>
 
-const long long DBS = 1000000;
+const long long DBS = 8;
 
 class Heapmax {
 public:
@@ -17,11 +17,9 @@ public:
     void extract();
     long long get();
 private:
-    std::pair<long long, long long>* HeapArray = new std::pair<long long, long long>[DBS];
-    long long* time = new long long[1000001];
+    long long* HeapArray = new long long[DBS];
     long long BS = DBS;
     long long size = 0;
-    long long counter = 1;
     void growHeap();
     void siftUp(long long i);
     void siftDown(long long i);
@@ -35,7 +33,7 @@ Heapmax::Heapmax() {
 Heapmax::Heapmax(std::vector<long long> ch) {
     while(BS<ch.size())growHeap();
     for (int i = 0; i < ch.size(); i++) {
-        HeapArray[i] = { ch[i],i };
+        HeapArray[i] = ch[i];
     }
     for (int i = size / 2; i >= 0; i--)
     {
@@ -49,7 +47,7 @@ Heapmax::~Heapmax() {
 void Heapmax::growHeap()
 {
     BS *= 2;
-    std::pair<long long, long long>* newB = new std::pair<long long, long long>[BS];
+    long long* newB = long long[BS];
     for (long long i = 0; i < size; ++i) {
         newB[i] = HeapArray[i];
     }
@@ -61,31 +59,23 @@ void Heapmax::growHeap()
 
 void Heapmax::insert(long long x) {
     if (size == BS)growHeap();
-    HeapArray[size] = { x,counter };
-
-    time[counter] = size;
+    HeapArray[size] = x;
     siftUp(size);
-    counter++;
     size++;
 }
 long long Heapmax::get() {
-    counter++;
-    return HeapArray[0].first;
+    return HeapArray[0];
 }
 
 void Heapmax::extract() {
     size--;
     HeapArray[0] = HeapArray[size];
-    time[HeapArray[0].second] = 0;
     siftDown(0);
-    counter++;
 }
 
 void Heapmax::siftUp(long long x) {
-    if ((x != 0) && (HeapArray[((x + 1) / 2) - 1].first < HeapArray[x].first)) {
+    if ((x != 0) && (HeapArray[((x + 1) / 2) - 1] < HeapArray[x])) {
         swap(HeapArray[((x + 1) / 2) - 1], HeapArray[x]);
-        time[HeapArray[((x + 1) / 2) - 1].second] = ((x + 1) / 2) - 1;
-        time[HeapArray[x].second] = x;
         siftUp(((x + 1) / 2) - 1);
     }
 }
@@ -95,25 +85,19 @@ void Heapmax::siftDown(long long x) {
 
     if (x2 - 1 < size)
         if (x3 - 1 < size) {
-            if (HeapArray[x2 - 1].first >= HeapArray[x3 - 1].first) {
-                if (HeapArray[x].first < HeapArray[x2 - 1].first) {
+            if (HeapArray[x2 - 1] >= HeapArray[x3 - 1]) {
+                if (HeapArray[x] < HeapArray[x2 - 1]) {
                     swap(HeapArray[x], HeapArray[x2 - 1]);
-                    time[HeapArray[x2 - 1].second] = x2 - 1;
-                    time[HeapArray[x].second] = x;
                     siftDown(x2 - 1);
                 }
             }
-            else if (HeapArray[x].first < HeapArray[x3 - 1].first) {
+            else if (HeapArray[x] < HeapArray[x3 - 1]) {
                 swap(HeapArray[x], HeapArray[x3 - 1]);
-                time[HeapArray[x].second] = x;
-                time[HeapArray[x3 - 1].second] = x3 - 1;
                 siftDown(x3 - 1);
             }
         }
-        else if (HeapArray[x].first < HeapArray[x2 - 1].first) {
+        else if (HeapArray[x] < HeapArray[x2 - 1]) {
             swap(HeapArray[x], HeapArray[x2 - 1]);
-            time[HeapArray[x].second] = x;
-            time[HeapArray[x2 - 1].second] = x2 - 1;
             siftDown(x2 - 1);
         }
 
@@ -122,7 +106,6 @@ void Heapmax::siftDown(long long x) {
 
 int main()
 {
-    Heapmax B;
     long long k, m, n;
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
@@ -132,8 +115,9 @@ int main()
     std::string s;
     for (int i = 0; i < k; i++) {
         std::cin >> m;
-        B.insert(m);
+        ch.push_back(m);
     }
+    Heapmax B(ch);
 
     for (int i = k; i < n; i++) {
         std::cin >> m;

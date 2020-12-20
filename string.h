@@ -1,3 +1,6 @@
+// ConsoleApplication11.cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
+//
+
 #include <iostream>
 #include <cstring>
 
@@ -32,21 +35,16 @@ public:
     }
     String(const char* c) {
         sz = strlen(c);
-        if (buffer <= sz) {
-            buffer = sz;
-            grow_buffer();
-        }
+        delete[] str;
+        char* str = new char[sz * 2];
+        buffer = sz * 2;
         memcpy(str, c, strlen(c));
     }
     String(size_t n, char c = '\0') :sz(n), buffer(n + 1), str(new char[n+1]) {
         memset(str, c, n);
     }
-    String(const String& s) : String(s.sz) {
+    String(const String& s) : String(s.sz*2) {
         memcpy(str, s.str, sz);
-        if (buffer <= sz) {
-            buffer = sz;
-            grow_buffer();
-        }
     }
     ~String() {
         if (str)delete[] str;
@@ -103,24 +101,18 @@ public:
         return *this;
     }
 
-    size_t length() {
-        return sz;
-    }
     size_t length() const {
         return sz;
     }
 
-    bool empty() {
-        return (sz == 0);
-    }
     bool empty() const {
         return (sz == 0);
     }
 
     void clear() {
         sz = 0;
-        String s(sz, '\0');
-        delete str;
+        delete[] str;
+        char* str = new char[8];
         buffer = 8;
     }
 

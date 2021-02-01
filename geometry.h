@@ -1,8 +1,8 @@
-﻿#include <vector>
 #include <cmath>
 #include <algorithm>
 #include <set>
 #include <iostream>
+#include <vector>
 using namespace std;
 const double Pi = asin(1) * 2;
 const double INF = 1'000'000'000'000;
@@ -118,16 +118,20 @@ public:
             b = b1;
         }
     }
-    friend Point reflexx(const Point, const Line);
-    friend Point solution(const Line&, const Line&);
+    Point p1() {
+        return a;
+    }
+    Point p2() {
+        return b;
+    }
     friend bool operator== (const Line&, const Line&);
 };
 
 bool operator== (const Line& l1, const Line& l2) {
-    Point v1(l1.a.x - l1.b.x, l1.a.y - l1.b.y);
-    Point v2(l2.a.x - l2.b.x, l2.a.y - l2.b.y);
-    Point w1(l1.a.x - l2.a.x, l1.a.y - l2.a.y);
-    Point w2(l1.b.x - l2.b.x, l1.b.y - l2.b.y);
+    Point v1(l1.a.x - temp12.x, l1.a.y - temp12.y);
+    Point v2(temp21.x - temp22.x, temp21.y - temp22.y);
+    Point w1(l1.a.x - temp21.x, l1.a.y - temp21.y);
+    Point w2(temp12.x - temp22.x, temp12.y - temp22.y);
     return equal(vprod(v1, v2), 0) || equal(vprod(w1, w2), 0);
 }
 
@@ -136,8 +140,9 @@ bool operator!= (const Line& a, const Line& c) {
 }
 
 Point solution(const Line& l1, const Line& l2) {
-    double A1 = l1.a.y - l1.b.y, B1 = l1.b.x - l1.a.x, C1 = l1.b.y * (l1.a.x - l1.b.x) + l1.b.x * (l1.b.y - l1.a.y);
-    double A2 = l2.a.y - l2.b.y, B2 = l2.b.x - l2.a.x, C2 = l2.b.y * (l2.a.x - l2.b.x) + l2.b.x * (l2.b.y - l2.a.y);
+    Point temp11 = l1.p1(), temp12 = l1.p2(), temp21 = l2.p1(), temp22 = l2.p2();
+    double A1 = temp11.y - temp12.y, B1 = temp12.x - temp11.x, C1 = temp12.y * (temp11.x - temp12.x) + temp12.x * (temp12.y - temp11.y);
+    double A2 = temp21.y - temp22.y, B2 = temp22.x - temp21.x, C2 = temp22.y * (temp21.x - temp22.x) + temp22.x * (temp22.y - temp21.y);
     double op = A1 * B2 - A2 * B1, op1 = C1 * B2 - C2 * B1, op2 = A1 * C2 - A2 * C1;
     if (equal(op, 0)) {
         Point temp(INF, INF);
@@ -150,12 +155,13 @@ Point solution(const Line& l1, const Line& l2) {
 }
 
 Point reflexx(const Point p, const Line axs) {
-    Point v1(p.x - axs.b.x, p.y - axs.b.y), v2(axs.a.x - axs.b.x, axs.a.y - axs.b.y);
+    Point temp1 = axs.p1(), temp2 = axs.p2();
+    Point v1(p.x - temp2.x, p.y - temp2.y), v2(temp1.x - temp2.x, temp1.y - temp2.y);
     Point temp = p;
     Point n(0, 0);
     if (vprod(v1, v2) != 0) {
         double angle = asin(vprod(v1, v2) / (length(v1, n) * length(v2, n)));
-        temp.rotate(axs.b, 2 * angle);
+        temp.rotate(temp2, 2 * angle);
     }
     return temp;
 }
@@ -166,9 +172,11 @@ void Point::reflex(const Point& center) {
 
 
 class Shape {
-public:
+
+protected:
     vector <Point> vert;
     set <Point> mult;
+public:
     Shape() = default;
     virtual ~Shape() {
 
@@ -373,10 +381,7 @@ bool Polygon::isCongruentTo(const Shape& another) const {
 }
 
 bool Polygon::isSimilarTo(const Polygon& aa) {
-    if (aa.vert.size() == 0) {
-        return false;
-    }
-    else {
+    
         double k = aa.perimeter() / this->perimeter();
         Point n(0, 0);
         this->scale(n, k);
@@ -384,7 +389,7 @@ bool Polygon::isSimilarTo(const Polygon& aa) {
         if (this->isCongruentTo(aa))g = true;
         this->scale(n, 1 / k);
         return g;
-    }
+    
 }
 
 double Polygon::area() const {
@@ -496,27 +501,22 @@ bool Ellipse::isSimilarTo(const Ellipse& aa) const {
 
 
 class Circle : public Ellipse {
-private:
-    double r;
-    Point cent;
 public:
 
     Circle(const Point& cen, const double& ro) {
-        r = ro;
-        cent = cen;
         fl = cent;
         fr = cent;
         a = r;
         b = r;
     }
     Point center() const {
-        return cent;
+        return fl;
     }
     ~Circle() {
         vert.clear();
     }
     double radius() const {
-        return r;
+        return a;
     }
 };
 
@@ -592,8 +592,10 @@ Circle Triangle::ninePointsCircle() const {
     return c;
 }
 Line Triangle::EulerLine() {
-    Point a = (*this).centroid();
-    Point b = (*this).orthocenter();
+    Line l1(vert[1], vert[2]), l2(vert[1], vert[0]);
+    Line ll1(vert[0], reflexx(vert[0], l1)), ll2(vert[2], reflexx(vert[2], l2));
+    Point a = solution(ll1, ll2);
+    Point b(((vert[0].x + vert[1].x + vert[2].x) / 3), (vert[0].y + vert[1].y + vert[2].y) / 3);
     Line l(a, b);
     return(l);
 }

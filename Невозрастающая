@@ -1,0 +1,65 @@
+#include <algorithm>
+#include <vector>
+#include <deque>
+#include <string>
+#include <map>
+#include<set>
+#include<iostream>
+//#include "geometry.h"
+//#include "permutation.h"
+ 
+using namespace std;
+ 
+
+vector<long long> posl(long long n, vector<long long>& ch){
+    
+long long inf = 2147483647;
+	vector<long long> itog;
+	vector<pair<long long, long long>> dp(n + 1, { -inf,0 });
+	dp[0].first = ch[0];
+	dp[0].second = 0;
+	for (int i = 1; i < n; i++) {
+		long long l = 0, r = i, mid;
+		while (r - l> 1) {
+			mid = (l + r) / 2;
+			if (dp[mid].first < ch[i])
+				r = mid;
+			else l = mid;
+		}
+		if (dp[r].first < ch[i] && dp[r - 1].first >= ch[i]) {
+			dp[r].first = ch[i];
+			dp[r].second = i;
+		}
+		else {
+			dp[l].first = ch[i];
+			dp[l].second = i;
+		}
+	}
+	for (int i = 0; i < n; i++) {
+		if (dp[i].first == -inf)
+			break;
+		if (i > 0)
+			if (dp[i - 1].second > dp[i].second)break;
+		itog.push_back(dp[i].second);
+	}
+	return itog;
+}
+
+int main()
+{
+long long n, m, x;
+ 
+	cin >> n;
+	vector<long long> ch,itog;
+	
+	for (int i = 0; i < n; i++) {
+		cin >> x;
+		ch.push_back(x);
+	}
+	
+	itog = posl(n,ch);
+	
+	cout << itog.size() << endl;
+	for (auto i : itog)
+		cout << i + 1 << ' ';
+}

@@ -1,0 +1,91 @@
+#include <algorithm>
+#include <vector>
+#include <deque>
+#include <string>
+#include <map>
+#include<set>
+#include<iostream>
+//#include "geometry.h"
+//#include "permutation.h"
+
+using namespace std;
+class ABCD_task{
+long long inf = 2147483647;
+long long n, m, x, maxi = -inf;
+    vector<long long> nl;
+	vector<vector<long long>> nlnl;
+	vector<vector<vector<long long>>> MTR;
+
+	vector<vector<long long>> dp;
+	vector<long long> temp;
+	public:
+	ABCD_task(){
+	    
+    nl.assign(5, 0);
+	nlnl.assign(5, nl);
+	MTR.assign(55, nlnl);
+
+	temp.assign(5, 1);
+	    dp.push_back(temp);
+	dp.push_back(temp);
+	dp.push_back(temp);
+	temp[2] = 0;
+	temp[4] = 0;
+	dp.push_back(temp);
+	dp.push_back(temp);
+	MTR[0] = dp;
+	for (long long i = 1; i < 55; i++) 
+		for (long long i1 = 0; i1 < 5; i1++)
+			for (long long i2 = 0; i2 < 5; i2++)
+				for (long long i3 = 0; i3 < 5; i3++)
+					MTR[i][i1][i2] = (MTR[i][i1][i2] + MTR[i - 1][i1][i3] * MTR[i - 1][i3][i2])% 999999937;
+
+	}
+	long long calculate(long long n){
+	    
+		for (long long i1 = 0; i1 < 5; i1++)
+			for (long long i2 = 0; i2 < 5; i2++)
+				if (i1 == i2)dp[i1][i2] = 1;
+				else dp[i1][i2] = 0;
+		temp.assign(5, 1);
+		--n;
+		long long k = 0;
+		while (n != 0) {
+			if (n & 1) {
+				vector<long long> t = temp;
+				temp.assign(5, 0);
+				for (long long i1 = 0; i1 < 5; i1++)
+					for (long long i2 = 0; i2 < 5; i2++)
+						temp[i1] = (temp[i1] + MTR[k][i1][i2] * t[i2]) % 999999937;
+			}
+			k++;
+			n = n >> 1;
+		}
+		long long sum = 0;
+		for (auto i : temp)sum = (sum + i) % 999999937;
+		return sum;
+	}
+};
+
+
+int main()
+{
+	
+long long n;
+ABCD_task task;
+	/*for (auto i : MTR) {
+		cout << endl << endl;
+		for (auto j : i) {
+			cout << endl;
+			for (auto k : j)cout << k << " ";
+		}
+	}*/
+
+	while (true) {
+		cin >> n;
+		if (n == 0)break;
+		cout << task.calculate(n) << '\n';
+	}
+
+}
+ 

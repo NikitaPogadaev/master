@@ -1,0 +1,666 @@
+﻿#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+template<typename T>
+class Deque {
+private:
+	const size_t  backet_size = 4;
+	size_t c_backet;
+	size_t sz;
+	size_t nach1;
+	size_t nach2;
+	size_t kon1;
+	size_t kon2;
+	vector<T*> dq;
+public:
+	Deque() {
+		cerr << "kons1" << endl;
+		c_backet = 3;
+		sz = 0;
+		nach1 = 1;
+		nach2 = 0;
+		kon1 = 1;
+		kon2 = 0;
+		T* temp1 = reinterpret_cast<T*>(new int8_t[sizeof(T) * backet_size]);
+		T* temp2 = reinterpret_cast<T*>(new int8_t[sizeof(T) * backet_size]);
+		T* temp3 = reinterpret_cast<T*>(new int8_t[sizeof(T) * backet_size]);
+		dq.push_back(temp1);
+		dq.push_back(temp2);
+		dq.push_back(temp3);
+	}
+	Deque(size_t n, const T& value = T()) {
+		cerr << "kons2" << endl;
+		if (n > 0) {
+			c_backet = max(((n / backet_size + 1) * 2), size_t(4));
+			sz = n;
+			nach1 = c_backet / 4;
+			nach2 = 0;
+			kon1 = nach1 + (n - 1) / backet_size;
+			kon2 = (n - 1) % backet_size;
+			dq.assign(c_backet, nullptr);
+			size_t g = nach1;
+			size_t i = 0;
+			for (size_t i1 = 0; i1 < dq.size(); ++i1) {
+				T* temp = reinterpret_cast<T*>(new int8_t[sizeof(T) * backet_size]);
+				dq[i1] = temp;
+			}
+			try {
+				for (; g <= kon1; ++g) {
+					for (i = 0; (i < backet_size) && (i + backet_size * (g - nach1) < sz); ++i) {
+						new(dq[g] + i)T(value);
+					}
+				}
+			}
+			catch (...) {
+				for (size_t j = 0; j < i; j++) {
+					(dq[g] + j)->~T();
+				}
+				for (size_t j = nach1; j < g; j++) {
+					for (size_t j1 = 0; j1 < backet_size; ++j1) {
+						(dq[j] + j1)->~T();
+					}
+				}
+				for (size_t j = 0; j < dq.size(); ++j) {
+					delete[] reinterpret_cast<int8_t*>(dq[j]);
+				}
+				dq.clear();
+				dq.shrink_to_fit();
+				throw;
+			}
+		}
+
+	}
+	Deque(const Deque<T>& D1) {
+		cerr << "kons3" << endl;
+		c_backet = D1.c_backet;
+		kon1 = D1.kon1;
+		kon2 = D1.kon2;
+		sz = D1.sz;
+		nach1 = D1.nach1;
+		nach2 = D1.nach2;
+		dq.assign(c_backet, nullptr);
+		size_t g = nach1;
+		size_t i = 0;
+		for (size_t i1 = 0; i1 < dq.size(); ++i1) {
+			T* temp = reinterpret_cast<T*>(new int8_t[sizeof(T) * backet_size]);
+			dq[i1] = temp;
+		}
+		try {
+			for (; g <= kon1; ++g) {
+				if (g == nach1)i = nach2;
+				else i = 0;
+				for (; (i < backet_size) && (i + backet_size * (g - nach1) < sz); ++i) {
+					new(dq[g] + i)T(D1.dq[g][i]);
+				}
+			}
+		}
+		catch (...) {
+			if (g == nach1) {
+				for (size_t j = nach2; j < i; j++) {
+					(dq[g] + j)->~T();
+				}
+			}
+			else {
+				for (size_t j = nach2; j < backet_size; j++) {
+					(dq[nach1] + j)->~T();
+				}
+				for (size_t j = 0; j < i; j++) {
+					(dq[g] + j)->~T();
+				}
+				for (size_t j = nach1 + 1; j < g; j++) {
+					for (size_t j1 = 0; j1 < backet_size; ++j1) {
+						(dq[j] + j1)->~T();
+					}
+				}
+				for (size_t j = 0; j < dq.size(); ++j) {
+					delete[] reinterpret_cast<int8_t*>(dq[j]);
+				}
+			}
+			dq.clear();
+			dq.shrink_to_fit();
+			throw;
+		}
+
+	}
+
+	Deque& operator=(const Deque<T>& D1) {
+		cerr << "kons=" << endl;
+		if (nach1 != kon1) {
+			for (size_t j = nach2; j < backet_size; j++) {
+				(dq[nach1] + j)->~T();
+			}
+			for (size_t j = 0; j <= kon2; j++) {
+				(dq[kon1] + j)->~T();
+			}
+			for (size_t j = nach1 + 1; j < kon1; j++) {
+				for (size_t j1 = 0; j1 < backet_size; ++j1) {
+					(dq[j] + j1)->~T();
+				}
+			}
+		}
+		else {
+			for (size_t j = nach2; j < kon2; j++) {
+				(dq[nach1] + j)->~T();
+			}
+		}
+		for (size_t j = 0; j < dq.size(); ++j) {
+			delete[] reinterpret_cast<int8_t*>(dq[j]);
+		}
+		c_backet = D1.c_backet;
+		kon1 = D1.kon1;
+		kon2 = D1.kon2;
+		sz = D1.sz;
+		nach1 = D1.nach1;
+		nach2 = D1.nach2;
+		dq.assign(c_backet, nullptr);
+		size_t g = nach1;
+		size_t i = 0;
+		for (size_t i1 = 0; i1 < dq.size(); ++i1) {
+			T* temp = reinterpret_cast<T*>(new int8_t[sizeof(T) * backet_size]);
+			dq[i1] = temp;
+		}
+		try {
+			for (; g <= kon1; ++g) {
+				if (g == nach1)i = nach2;
+				else i = 0;
+				for (; (i < backet_size) && (i + backet_size * (g - nach1) < sz); ++i) {
+					new(dq[g] + i)T(D1.dq[g][i]);
+				}
+			}
+		}
+		catch (...) {
+			if (g == nach1) {
+				for (size_t j = nach2; j < i; j++) {
+					(dq[g] + j)->~T();
+				}
+			}
+			else {
+				for (size_t j = nach2; j < backet_size; j++) {
+					(dq[nach1] + j)->~T();
+				}
+				delete[] reinterpret_cast<int8_t*>(dq[nach1]);
+				for (size_t j = 0; j < i; j++) {
+					(dq[g] + j)->~T();
+				}
+				delete[] reinterpret_cast<int8_t*>(dq[g]);
+				for (size_t j = nach1 + 1; j < g; j++) {
+					delete[] dq[j];
+				}
+			}
+			dq.clear();
+			dq.shrink_to_fit();
+			throw;
+		}
+		return *this;
+	}
+
+	~Deque() {
+		//cerr << "destr";
+		if (sz > 0) {
+			if (nach1 != kon1) {
+				for (size_t j = nach2; j < backet_size; j++) {
+					(dq[nach1] + j)->~T();
+				}
+				for (size_t j = 0; j <= kon2; j++) {
+					(dq[kon1] + j)->~T();
+				}
+				for (size_t j = nach1 + 1; j < kon1; j++) {
+					for (size_t j1 = 0; j1 < backet_size; ++j1) {
+						(dq[j] + j1)->~T();
+					}
+				}
+			}
+			else {
+				for (size_t j = nach2; j < kon2; j++) {
+					(dq[nach1] + j)->~T();
+				}
+			}
+		}
+		for (size_t j = 0; j < dq.size(); ++j) {
+			delete[] reinterpret_cast<int8_t*>(dq[j]);
+		}
+	}
+
+
+
+	size_t size() {
+		//cerr << "size " << sz << endl;
+		return sz;
+	}
+	size_t size()const {
+		//cerr << "size " << sz << endl;
+		return sz;
+	}
+
+	T& operator[](size_t i1) {
+		//cerr << "[]" << endl;
+		return dq[nach1 + (i1 + nach2) / backet_size][(i1 + nach2) % backet_size];
+	}
+	const T& operator[](size_t i1) const {
+		//cerr << "[]const" << endl;
+		return dq[nach1 + (i1 + nach2) / backet_size][(i1 + nach2) % backet_size];
+	}
+	T& at(size_t i1) {
+		//cerr << "at" << endl;
+		if (i1 >= sz) throw std::out_of_range("");
+		else return dq[nach1 + (i1 + nach2) / backet_size][(i1 + nach2) % backet_size];
+	}
+	const T& at(size_t i1) const {
+		//cerr << "atconst" << endl;
+		if (i1 >= sz)throw std::out_of_range("");
+		else return dq[nach1 + (i1 + nach2) / backet_size][(i1 + nach2) % backet_size];
+	}
+	void grow_buffer_up() {
+		cerr << "growup" << endl;
+		c_backet *= 2;
+		vector<T*>dq1(c_backet, nullptr);
+		for (size_t i1 = 0; i1 < dq.size(); ++i1) {
+			T* temp = reinterpret_cast<T*>(new int8_t[sizeof(T) * backet_size]);
+			dq1[c_backet / 2 + i1] = temp;
+		}
+		for (size_t i = 0; i < dq.size(); ++i)
+			dq1[i] = dq[i];
+		dq = dq1;
+	}
+	void grow_buffer_down() {
+		cerr << "growdown" << endl;
+		c_backet *= 2;
+		vector<T*>dq1(c_backet, nullptr);
+		for (size_t i1 = 0; i1 < dq.size(); ++i1) {
+			T* temp = reinterpret_cast<T*>(new int8_t[sizeof(T) * backet_size]);
+			dq1[i1] = temp;
+		}
+		for (size_t i = 0; i < dq.size(); ++i)
+			dq1[c_backet / 2 + i] = dq[i];
+		nach1 += c_backet / 2;
+		kon1 += c_backet / 2;
+		dq = dq1;
+	}
+	void push_back(const T& value) {
+		//cerr << "pshback" << endl;
+		//try {
+		if (sz > 0) {
+			if (kon2 == backet_size - 1) {
+				new(dq[kon1 + 1])T(value);
+				++kon1;
+				kon2 = 0;
+			}
+			else {
+				new(dq[kon1] + kon2 + 1)T(value);
+				++kon2;
+			}
+			if ((kon1 == dq.size() - 1) && (kon2 == backet_size - 1))grow_buffer_up();
+		}
+		else {
+			new(dq[kon1])T(value);
+		}
+		++sz;
+		//}
+		//catch (...) { throw; }
+	}
+	void push_front(const T& value) {
+		//cerr << "pshfront" << endl;
+		//try {
+		if (sz > 0) {
+			if (nach2 == 0) {
+				new(dq[nach1 - 1] + backet_size - 1)T(value);
+				--nach1;
+				nach2 = backet_size - 1;
+			}
+			else {
+				new(dq[nach1] + nach2 - 1)T(value);
+				--nach2;
+			}
+			if ((nach1 == 0) && (nach2 == 0)) grow_buffer_down();
+		}
+		else {
+			new(dq[nach1])T(value);
+		}
+		++sz;
+		//}
+		//catch (...) { throw; }
+	}
+	void pop_back() {
+		//cerr << "ppback" << endl;
+		//if (kon2 == backet_size - 1)delete[] reinterpret_cast<int8_t*>(dq[kon1 + 1]);
+		(dq[kon1] + kon2)->~T();
+		if (kon2 == 0) {
+			kon2 = backet_size - 1;
+			--kon1;
+		}
+		else --kon2;
+		if (sz > 0)--sz;
+	}
+	void pop_front() {
+		//cerr << "ppfront" << endl;
+		//if (nach2 == 0)delete[] reinterpret_cast<int8_t*>(dq[nach1 - 1]);
+		(dq[nach1] + nach2)->~T();
+		if (nach2 == backet_size - 1) {
+			nach2 = 0;
+			++nach1;
+		}
+		else ++nach2;
+		--sz;
+	}
+
+
+	template<bool IsConst>
+	struct common_iterator {
+		//private:
+		int num1;
+		int num2;
+		int backet_size = 4;
+		using T_type = std::conditional_t<IsConst, const T&, T&>;
+		using T_ptr_type = std::conditional_t<IsConst, const T*, T*>;
+		T_ptr_type ptr;
+		const vector<T*>* dq;
+	public:
+		using iterator_category = std::random_access_iterator_tag;
+		using value_type = T;
+		using pointer = T_ptr_type;
+		using reference = T_type;
+		using difference_type = std::ptrdiff_t;
+		common_iterator(T_ptr_type temp, int a, int b, const vector<T*>* vc) :num1(a), num2(b), ptr(temp), dq(vc) {
+			//cerr << "itk" << endl;
+		}
+		/*common_iterator(const common_iterator<IsConst>& it){
+			ptr = it.ptr;
+			num1 = it.num1;
+			num2 = it.num2;
+		}
+		common_iterator<IsConst>& operator=(const common_iterator<IsConst>& it){
+			ptr = it.ptr;
+			num1 = it.num1;
+			num2 = it.num2;
+			return *this;
+		}*/
+		T_type operator*() {
+			//cerr << "*" << endl;
+			return *ptr;
+		}
+		T_ptr_type operator->() {
+			//cerr << "->" << endl;
+			return ptr;
+		}
+
+		common_iterator<IsConst>& operator++() {
+			//cerr << "++1" << endl;
+			if (num2 == backet_size - 1) {
+				num2 = 0;
+				num1++;
+				ptr = (*dq)[num1];
+			}
+			else {
+				num2 += 1;
+				++ptr;
+			}
+			return *this;
+		}
+		common_iterator<IsConst>& operator++(int) {
+			//cerr << "1++" << endl;
+			common_iterator<IsConst> i(*this);
+			if (num2 == backet_size - 1) {
+				num2 = 0;
+				num1 += 1;
+				ptr = (*dq)[num1];
+			}
+			else {
+				num2 += 1;
+				++ptr;
+			}
+			return i;
+		}
+		common_iterator<IsConst>& operator--() {
+			//cerr << "--1" << endl;
+			if (num2 == 0) {
+				num2 = backet_size - 1;
+				num1 -= 1;
+				ptr = (*dq)[num1] + backet_size - 1;
+			}
+			else {
+				num2 -= 1;
+				--ptr;
+			}
+			return *this;
+		}
+		common_iterator<IsConst>& operator--(int) {
+			//cerr << "1--" << endl;
+			common_iterator<IsConst> i(*this);
+			if (num2 == 0) {
+				num2 = backet_size - 1;
+				num1 -= 1;
+				ptr = (*dq)[num1] + backet_size - 1;
+			}
+			else {
+				num2 -= 1;
+				--ptr;
+			}
+			return i;
+		}
+		common_iterator<IsConst>& operator+=(int a) {
+			//cerr << "+=" << endl;
+			num1 = num1 + ((num2 + a) / backet_size);
+			if (num2 + a - ((num2 + a) / backet_size) * backet_size < 0)num1--;
+			num2 = (((num2 + a) % backet_size) + backet_size) % backet_size;
+			ptr = (*dq)[num1] + num2;
+			return *this;
+		}
+		common_iterator<IsConst>& operator-=(int a) {
+			//cerr << "-=" << endl;
+			num1 = num1 + ((num2 - a) / backet_size);
+			if (num2 - a - ((num2 - a) / backet_size) * backet_size < 0)num1--;
+			num2 = (((num2 - a) % backet_size) + backet_size) % backet_size;
+			ptr = (*dq)[num1] + num2;
+			return *this;
+		}
+		bool operator== (const common_iterator<IsConst>& iter) {
+			//cerr << "==" << endl;
+			return ptr == iter.ptr;
+		}
+
+		bool operator!= (const common_iterator<IsConst>& iter) {
+			//cerr << "!=" << endl;
+			return !(ptr == iter.ptr);
+		}
+
+		bool operator<= (const common_iterator<IsConst>& iter) {
+			//cerr << "<=" << endl;
+			if (num1 == iter.num1)
+				return (num2 <= iter.num2);
+			else
+				return (num1 <= iter.num1);
+		}
+
+		bool operator>= (const common_iterator<IsConst>& iter) {
+			//cerr << ">=" << endl;
+			if (num1 == iter.num1)
+				return (num2 >= iter.num2);
+			else
+				return (num1 >= iter.num1);
+		}
+
+		bool operator< (const common_iterator<IsConst>& iter) {
+			//cerr << "<" << endl;
+			return (*this != iter) && (*this <= iter);
+		}
+
+		bool operator> (const common_iterator<IsConst>& iter) {
+			//cerr << ">" << endl;
+			return (*this != iter) && (*this >= iter);
+		}
+
+
+
+		bool operator== (const common_iterator<IsConst>& iter)const {
+			//cerr << "==const" << endl;
+			return ptr == iter.ptr;
+		}
+
+		bool operator!= (const common_iterator<IsConst>& iter)const {
+			//cerr << "!=const" << endl;
+			return !(ptr == iter.ptr);
+		}
+
+		bool operator<= (const common_iterator<IsConst>& iter)const {
+			//cerr << "<=const" << endl;
+			if (num1 == iter.num1)
+				return (num2 <= iter.num2);
+			else
+				return (num1 <= iter.num1);
+		}
+
+		bool operator>= (const common_iterator<IsConst>& iter)const {
+			//cerr << ">=const" << endl;
+			if (num1 == iter.num1)
+				return (num2 >= iter.num2);
+			else
+				return (num1 >= iter.num1);
+		}
+
+		bool operator< (const common_iterator<IsConst>& iter)const {
+			//cerr << "<const" << endl;
+			return (*this != iter) && (*this <= iter);
+		}
+
+		bool operator> (const common_iterator<IsConst>& iter)const {
+			//cerr << ">const" << endl;
+			return (*this != iter) && (*this >= iter);
+		}
+
+
+
+
+		common_iterator<IsConst> operator+(int b) {
+			//cerr << "+" << endl;
+			common_iterator<IsConst> temp(*this);
+			temp += b;
+			return temp;
+		}
+		common_iterator<IsConst> operator-(int b) {
+			//cerr << "-int" << endl;
+			common_iterator<IsConst> temp(*this);
+			temp -= b;
+			return temp;
+		}
+		int operator-(const common_iterator& b) {
+			//cerr << "-i" << endl;
+			return (num1 - b.num1) * backet_size + (num2 - b.num2);
+		}
+		friend class Deque;
+	};
+
+
+
+	using iterator = common_iterator<false>;
+	using const_iterator = common_iterator<true>;
+	using reverse_iterator = std::reverse_iterator<iterator>;
+	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+	iterator begin() {
+		//cerr << "begin" << endl;
+		return iterator(dq[nach1] + nach2, nach1, nach2, &dq);
+	}
+	iterator end() {
+		//cerr << "end" << endl;
+		iterator it(dq[kon1] + kon2, kon1, kon2, &dq);
+		++it;
+		return it;
+	}
+	const_iterator cbegin() {
+		//cerr << "cbegin" << endl;
+		return const_iterator(dq[nach1] + nach2, nach1, nach2, &dq);
+	}
+	const_iterator cend() {
+		//cerr << "cend" << endl;
+		const_iterator it(dq[kon1] + kon2, kon1, kon2, &dq);
+		++it;
+		return it;
+	}
+	reverse_iterator rend() {
+		//cerr << "rend" << endl;
+		return reverse_iterator(begin() - 1);
+	}
+	reverse_iterator rbegin() {
+		//cerr << "rbegin" << endl;
+		return reverse_iterator(end() - 1);
+	}
+	const_reverse_iterator crend() {
+		//cerr << "crend" << endl;
+		return const_reverse_iterator(cbegin() - 1);
+	}
+	const_reverse_iterator crbegin() {
+		//cerr << "crbegin" << endl;
+		return const_reverse_iterator(cend() - 1);
+	}
+
+
+	const_iterator begin()const {
+		//cerr << "beginc" << endl;
+		return const_iterator(dq[nach1] + nach2, nach1, nach2, &dq);
+	}
+	const_iterator end() const {
+		//cerr << "endc" << endl;
+		const_iterator it(dq[kon1] + kon2, kon1, kon2, &dq);
+		++it;
+		return it;
+	}
+	const_iterator cbegin()const {
+		//cerr << "cbeginc" << endl;
+		return const_iterator(dq[nach1] + nach2, nach1, nach2, &dq);
+	}
+	const_iterator cend()const {
+		//cerr << "cendc" << endl;
+		const_iterator it(dq[kon1] + kon2, kon1, kon2, &dq);
+		++it;
+		return it;
+	}
+	const_reverse_iterator rend() const {
+		//cerr << "rendc" << endl;
+		return const_reverse_iterator(begin() - 1);
+	}
+	const_reverse_iterator rbegin()const {
+		//cerr << "rbeginc" << endl;
+		return const_reverse_iterator(end() - 1);
+	}
+	const_reverse_iterator crend()const {
+		//cerr << "crendc" << endl;
+		return const_reverse_iterator(cbegin() - 1);
+	}
+	const_reverse_iterator crbegin()const {
+		//cerr << "crbeginc" << endl;
+		return const_reverse_iterator(cend() - 1);
+	}
+
+
+	void insert(iterator it, const T& value) {
+		//cerr << "insert" << endl;
+		iterator k(--end());
+		T el = dq[kon1][kon2];
+		while (k > it) {
+			iterator k1(k);
+			(k1.ptr)->~T();
+			new(k1.ptr)T(*(--k));
+		}
+		(k.ptr)->~T();
+		new(k.ptr)T(value);
+		push_back(el);
+	}
+	void erase(iterator it) {
+		//cerr << "erase" << endl;
+		iterator k(it), en(--end());
+		while (k != en) {
+			iterator k1(k);
+			(k1.ptr)->~T();
+			new(k1.ptr)T(*(++k));
+		}
+		pop_back();
+	}
+
+};
+
+
+
+

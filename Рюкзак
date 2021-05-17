@@ -1,0 +1,35 @@
+#include <cstring>
+#include <iostream>
+#include <deque>
+#include <algorithm>
+
+long long ruk(long long s, std::deque<long long> t){
+    
+long long  inf = 10000000000, co=0,n=t.size();
+    t.push_front(0);
+    std::deque<long long>temp(s+1, 0);
+    std::deque<std::deque<long long>>ch(n+1,temp);
+    for (long long i = 0; i < n; i++) {
+        for (long long j = 0; j < s; j++) {
+            ch[i + 1][j] = std::max(ch[i + 1][j], ch[i][j]);
+            if(j+ t[i + 1] <=s)
+                ch[i + 1][t[i + 1]+j] = std::max(ch[i+ 1][t[i  +1] + j], ch[i][j]+t[i+1]);
+        }
+    }
+    for (long long i = 0; i <= n; i++) 
+        for (long long j = 0; j <= s; j++) 
+            co = std::max(co, ch[i][j]);
+    return co;
+}
+
+
+int  main() {
+    long long  x, n,s;
+    //std::cout << (1 << 30);
+    std::cin >> s >> n;
+    std::deque<long long>t;
+    for (long long i = 0; i < n; i++) {
+        std::cin >> x; t.push_back(x);
+    }
+    std::cout << ruk(s,t);
+}

@@ -1,0 +1,118 @@
+
+#include <algorithm>
+#include <vector>
+#include <deque>
+#include <string>
+#include <map>
+#include<set>
+#include<iostream>
+
+using namespace std;
+
+long long pretty3(string& s, int m, int mod){
+    
+    int x,u;
+    vector<int>n;
+    for (int i = s.length() - 1; i >= 0; --i) {
+        int kek = s[i] - '0';
+        n.push_back(kek);
+    }
+
+    int carry = 0, base = 10;
+    for (int i = 0; i < 1 || carry; ++i) {
+        n[i] -= carry + (i < 1 ? 1 : 0);
+        carry = n[i] < 0;
+        if (carry)  n[i] += base;
+    }
+    while (n.size() > 1 && n.back() == 0)
+        n.pop_back();
+
+    vector <vector<bool>> can((1 << m), vector<bool>(1 << m));
+    for (int i = 0; i < (1 << m); ++i)
+        for (int j = 0; j < (1 << m); ++j) {
+            int temp = i ^ j, co = 0, i1 = i, j1 = j, state = 3;
+            bool y = true;
+            for (int g = 0; g < m; ++g) {
+                if (((i1 & 1) == (j1 & 1)) && ((i1 & 1) == state)) {
+                    y = false;
+                    break;
+                }
+                if ((i1 & 1) == (j1 & 1))state = (i1 & 1);
+                else state = 3;
+                i1 = i1 >> 1;
+                j1 = j1 >> 1;
+            }
+            can[i][j] = y;
+            can[j][i] = y;
+
+        }
+
+
+    vector<int> temp((1 << m), 0);
+    vector<vector<int>> dp((1 << m), temp);
+    vector<vector<vector<int>>> MTR(350, dp);
+
+    for (int j = 0; j < (1 << m); ++j)
+        for (int g = 0; g < (1 << m); ++g)
+            if (can[j][g]) {
+                dp[j][g] = 1;
+            }
+
+
+    MTR[0] = dp;
+    for (int i = 1; i < 350; i++)
+        for (int i1 = 0; i1 < (1 << m); i1++)
+            for (int i2 = 0; i2 < (1 << m); i2++)
+                for (int i3 = 0; i3 < (1 << m); i3++)
+                    MTR[i][i1][i2] = (MTR[i][i1][i2] + MTR[i - 1][i1][i3] * MTR[i - 1][i3][i2]) % mod;
+
+
+
+    for (int i1 = 0; i1 < (1 << m); i1++)
+        for (int i2 = 0; i2 < (1 << m); i2++)
+            if (i1 == i2)dp[i1][i2] = 1;
+            else dp[i1][i2] = 0;
+    temp.assign((1 << m), 1);
+    int k = 0;
+    while ((n.size() != 0) && (n[n.size()-1] != 0)) {
+        if (n[0] % 2 != 0) {
+            vector<int> t = temp;
+            temp.assign((1 << m), 0);
+            for (int i1 = 0; i1 < (1 << m); i1++)
+                for (int i2 = 0; i2 < (1 << m); i2++) {
+                    temp[i1] = (temp[i1] + MTR[k][i1][i2] * t[i2]) % mod;
+                }
+        }
+        ++k;
+
+        carry = 0;
+        for (int i = (int)n.size() - 1; i >= 0; --i) {
+            int cur = n[i] + carry * 1ll * base;
+            n[i] = int(cur / 2);
+            carry = int(cur % 2);
+        }
+        while (n.size() > 1 && n.back() == 0)
+            n.pop_back();
+
+    }
+    int sum = 0;
+    for (auto i : temp)sum = (sum + i) % mod;
+    return sum;
+}
+
+
+
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    int m, mod;
+    string s;
+    cin >> s;
+
+
+    cin >> m >> mod;
+    //--n
+    cout << pretty3(s,m,mod);
+
+
+}

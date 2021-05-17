@@ -1,0 +1,58 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <cmath>
+#include <iomanip>
+
+using namespace std;
+
+long long pretty(long long n, long long m){
+    
+	long long u=10, k, kln,sum=0;
+	if (n > m)swap(n, m);
+	vector <vector<bool>> can(1 << n, vector<bool>(1 << n));
+	for (long long i = 0; i < (1 << n); ++i)
+		for (long long j = 0; j < (1 << n); ++j) {
+			long long temp = i ^ j, co = 0, i1 = i, j1 = j, state = 3;
+			bool y=true;
+			for (long long g = 0; g < n; ++g) {
+				if (((i1 & 1) == (j1 & 1)) && ((i1 & 1) == state)) {
+					y=false;
+					break;
+				}
+				if ((i1 & 1) == (j1 & 1))state = (i1 & 1);
+				else state = 3;
+				i1 = i1 >> 1;
+				j1 = j1 >> 1;
+			}
+			can[i][j] =y;
+			can[j][i] =y;
+
+		}
+
+
+	vector<long long>dp(1<<n, 1);
+	sum = 1 << n;
+	for (long long i = 1; i < m; ++i) {
+		vector<long long>temp(1<<n, 0);
+		sum = 0;
+		for (long long j = 0; j < (1 << n); ++j)
+			for (long long g = 0; g < (1 << n); ++g) 
+				if (can[j][g]){
+					temp[j] += dp[g];
+					sum += dp[g];
+				}
+		dp = temp;
+	}
+	return sum;
+}
+
+
+int main()
+{
+	long long n, m;
+	cin >> n >> m;
+	cout << pretty(n,m);
+
+
+}

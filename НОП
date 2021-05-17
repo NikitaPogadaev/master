@@ -1,0 +1,41 @@
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <map>
+#include<set>
+#include<iostream>
+//#include "geometry.h"
+//#include "permutation.h"
+
+using namespace std;
+long long nop(vector <long long >& s1, vector <long long >& s2){
+long long n=s1.size(), m = s2.size();
+vector <long long >temp(s1.size() + 1, 0);
+	vector <vector <long long >> dp(s2.size() + 1, temp);
+	
+	long long ans = 0;
+	for (long long i = 1; i <= s2.size(); i++) {
+		for (long long j = 1; j <= s1.size(); j++) {
+			if (s1[j-1] == s2[i-1])dp[i][j] = max(max(dp[i - 1][j], dp[i][j-1]), dp[i - 1][j-1]+1);
+			else dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]);
+		}
+	}    
+return dp[m][n];
+}
+
+
+
+int main()
+{
+long long n,m,x;
+	vector <long long >s1;
+	vector <long long >s2;
+	cin >> n;
+	for (long long i = 0; i < n; i++) { cin >> x; s1.push_back(x); }
+	cin >> m;
+	for (long long i = 0; i < m; i++) { cin >> x; s2.push_back(x); }
+	
+	cout << nop(s1,s2);
+
+
+}

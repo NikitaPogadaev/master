@@ -1,0 +1,87 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <set>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+
+class Graph
+{
+private:
+  vector<vector<pair<long long, long long>>>MTR;  
+public:
+	const long long inf = 100000000000000000000;
+
+Graph() = default;
+    Graph (long long n)
+  {
+    MTR.resize (n);
+  }
+  vector<vector<pair<long long, long long>>>&get_list ()
+  {
+    return MTR;
+  }
+  void add_edge (long long a, long long b, long long l)
+  {
+            MTR[a-1].push_back({b-1, l});
+            MTR[b-1].push_back({a-1, l});
+  }
+ 
+ 
+        long long deik(long long nach,long long kon,vector<vector<pair<long long, long long>>>& a){
+            set <pair<long long, long long>> sl;
+            vector <long long>d(a.size(),inf);
+            d[nach]=0;
+           sl.insert({d[nach], nach});
+           
+           
+         while(sl.size()!=0){
+             long long num = sl.begin()->second;
+             if (num == kon)
+                return d[kon];
+             sl.erase(sl.begin());
+             for(long long i = 0;i<a[num].size();i++){
+                 if(d[a[num][i].first]>d[num]+a[num][i].second){
+                     sl.erase({d[a[num][i].first], a[num][i].first});
+                     d[a[num][i].first] = d[num]+a[num][i].second;
+                     sl.insert({d[num]+a[num][i].second, a[num][i].first});
+                 }
+             }
+         }
+         
+         return d[kon];
+        }
+
+  
+  long long answer (long long n, long long s){    
+      long long temp = deik(n, s, MTR);
+         if(temp < inf)return temp;
+         else return -1;
+  }
+  
+  
+  
+
+};
+
+
+
+
+         
+        int main()
+        {
+                     long long n, m, k,nach, kon;
+         cin >> n >> m >> nach >> kon;
+         --nach;
+         --kon;
+         Graph gr(n);
+         for(long long i=0;i<m;i++){
+             long long a, b, l;
+             cin >> a >> b >> l;
+             gr.add_edge(a,b,l);
+         }
+         cout << gr.answer(nach, kon);
+         
+        }

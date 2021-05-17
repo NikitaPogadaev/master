@@ -1,0 +1,87 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+
+class Graph{
+    private:
+	vector<vector<long long>>MTR;
+	vector<long long>tin;
+	vector<long long>tout;
+	public:
+	Graph(long long n){
+	MTR.resize(n); 
+	tin.resize(n);
+	tout.resize(n);
+	}
+	vector<vector<long long>>& get_list(){
+	    return MTR;
+	}
+	void add_edge(long long a, long long b){
+		MTR[a].push_back(b);
+	}
+	
+void dfs(long long x, vector<long long>&put, set<long long>&is,bool& can, vector<bool>& flag,vector<long long>&itog) {
+	if (can) {
+		if (is.find(x) == is.end()) {
+			if (flag[x]) {
+				flag[x] = false;
+				put.push_back(x);
+				is.insert(x);
+				for (auto i : MTR[x]) {
+					if (can)
+						dfs(i, put, is, can, flag, itog);
+				}
+				if (can) {
+					is.erase(x);
+					put.pop_back();
+				}
+			}
+		}
+		else {
+			can = false;
+			long long i = 0;
+			for (; put[i] != x; i++) { can = false; }
+			for (long long j = i; j < put.size(); ++j)itog.push_back(put[j]+1);
+		}
+	}
+}
+vector<long long> answer(){
+	bool can = true;
+	vector<bool> flag(MTR.size(),true);
+	vector<long long>put;
+	set<long long>is;
+	vector<long long> x;
+	for (int i = 0;  i < MTR.size(); i++) {
+		if(flag[i] && can)
+		dfs(i, put, is, can, flag, x);
+	}
+	return x;
+}
+
+};
+
+
+
+
+int main()
+{
+		int n, m, k,u,kor;
+	cin >> n >> m;
+	bool can = true;
+	Graph gr(n);
+	for (int i = 0; i < m; i++) {
+		cin >> u >> k;
+		--u; --k;
+		gr.add_edge(u,k);
+	}
+	vector<long long> itog = gr.answer();
+	if(itog.size()>0){
+	    cout << "YES" << endl;
+	    for(auto i:itog)cout << i << " ";
+	}
+	else cout << "NO";
+}

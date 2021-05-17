@@ -1,0 +1,118 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <set>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+
+class Graph
+{
+private:
+  vector<pair<pair<long long, long long>, long long>>MTR;  
+public:
+	const long long inf = 100000000000000000000;
+
+Graph() = default;
+    Graph (long long n)
+  {
+    MTR.resize (n);
+  }
+  vector<pair<pair<long long, long long>, long long>>&get_list ()
+  {
+    return MTR;
+  }
+  void add_edge (long long a, long long b, long long l)
+  {
+    MTR.push_back({{a,b},l});
+  }
+ 
+ 
+
+       
+        
+void dfs(long long x, vector<vector<long long>>&MT, vector<bool>& used, vector<bool>& wrong) {
+				used[x] = true;
+				wrong[x] = true;
+				for (auto i : MT[x]) {
+					if (!used[i])
+						dfs(i, MT, used, wrong);
+				}
+}
+       
+       
+       
+       
+        void ford(vector<pair<pair<long long, long long>, long long>>& a, vector<long long>& d, long long n, long long v){
+	        d[v] = 0;
+	        bool flag = false;
+	        for (long long i=0; i<n-1; ++i){
+		        for (long long j=0; j<a.size(); ++j)
+			        if (d[a[j].first.first] < inf)
+			            if (d[a[j].first.second] > d[a[j].first.first] + a[j].second) {
+					        d[a[j].first.second] = d[a[j].first.first] + a[j].second;
+					        flag = true;
+			            }
+			     if(!flag)return;
+			     flag = false;
+	        }
+	        
+	        
+	        vector<bool> wrong(n, false), used(n, false);
+		        for (long long j=0; j<a.size(); ++j)
+			        if (d[a[j].first.first] < inf)
+			            if (d[a[j].first.second] > d[a[j].first.first] + a[j].second) {
+					        d[a[j].first.second] = d[a[j].first.first] + a[j].second;
+			                wrong[a[j].first.second]=true;
+			            }
+			 vector<vector<long long>>MT(n);
+			 for(auto i:a)MT[i.first.first].push_back(i.first.second);
+	        
+	        for(long long i=0;i<wrong.size();++i)
+	            if((!used[i])&&(wrong[i]))dfs(i,MT,used, wrong);
+	       for(long long i=0;i<d.size();++i)
+	            if(wrong[i])d[i] = -inf;
+	        
+        }
+       
+
+
+  
+  vector<long long> answer (long long n, long long s){      
+      vector<long long>d(n, inf);     
+      ford(MTR, d, n, s);
+      	return d;
+  }
+  
+  
+  
+
+};
+
+
+
+
+         
+        int main()
+        {
+            string s1,s2;
+         long long n, m, s;
+         cin >> n >> m >> s;
+         --s;
+            vector<long long>d;
+            Graph gr;
+            
+         for(long long i=0;i<m;i++){
+             long long a,b,l;
+             cin >> a >> b >> l;
+             gr.add_edge(a-1,b-1,l);
+         }
+         d = gr.answer(n,s);
+         for(auto i:d){
+         	if(i==gr.inf)cout << '*' << endl;
+         	else if (i==-gr.inf)cout << '-' << endl;
+         	else cout << i << endl;
+         }
+         
+        }

@@ -1,0 +1,91 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+
+class Graph
+{
+private:
+  vector < vector < long long >>MTR;
+public:
+    Graph (long long n)
+  {
+    MTR.resize (n);
+  }
+  vector < vector < long long >>&get_list ()
+  {
+    return MTR;
+  }
+  void add_edge (long long a, long long b)
+  {
+    MTR[a].push_back (b);
+    MTR[b].push_back (a);
+  }
+
+void dfs (long long v, long long p, long long& timer, vector<bool>& used, vector<long long>& tin, vector<long long>& fup, set<long long>& siz) {
+	used[v] = true;
+	tin[v] = fup[v] = timer++;
+	long long child = 0;
+	for (size_t i=0; i<MTR[v].size(); ++i) {
+		long long to = MTR[v][i];
+		if (to == p)  continue;
+		if (used[to])
+			fup[v] = min (fup[v], tin[to]);
+		else {
+			dfs (to, v, timer, used, tin, fup, siz);
+			fup[v] = min (fup[v], fup[to]);
+			if (fup[to] >= tin[v] && p != -1)
+				siz.insert(v);
+			++child;
+		}
+	}
+	if (p == -1 && child > 1)
+		siz.insert(v);
+}
+  
+  
+  set<long long> answer ()
+  {
+    vector<bool> used(MTR.size(),false);
+    long long timer;
+    vector<long long>tin(MTR.size()), fup(MTR.size());
+    set<long long>siz;
+  timer = 0;
+  for (long long i = 0; i < MTR.size(); ++i)
+    if (!used[i])
+      dfs(i, -1, timer, used, tin, fup, siz);
+    return siz;
+  }
+  
+  
+  
+
+};
+
+
+
+
+int main ()
+{
+
+long long a1,b1,n,m;
+  cin >> n >> m;
+Graph gr(n);
+  for (long long i = 0; i < m; i++)
+    {
+      cin >> a1 >> b1;
+      gr.add_edge(a1-1,b1-1);
+    }
+
+
+auto siz = gr.answer();
+
+  cout << siz.size () << endl;
+for (auto i:siz)
+    {
+      cout << i+1 << endl;
+    }
+}

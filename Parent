@@ -1,0 +1,85 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+long long dfs(long long x, long long in, vector<vector<long long>>&MTR, vector<long long>&tin, vector<long long>&tout) {
+	++in;
+	tin[x] = in;
+	long long out = in,in1=in;
+	for (auto i : MTR[x]) {
+		in1 = dfs(i, in1, MTR, tin, tout)+1;
+		out = max(out, in1);
+	}
+		
+		++out;
+		tout[x] = out;
+		return out;
+}
+
+
+class Graph{
+    private:
+	vector<vector<long long>>MTR;
+	vector<long long>tin;
+	vector<long long>tout;
+	public:
+	Graph(long long n){
+	MTR.resize(n); 
+	tin.resize(n);
+	tout.resize(n);
+	}
+	vector<vector<long long>>& get_list(){
+	    return MTR;
+	}
+	void add_edge(long long a, long long b){
+		MTR[a].push_back(b);
+	}
+	
+long long dfs(long long x, long long in) {
+	++in;
+	tin[x] = in;
+	long long out = in,in1=in;
+	for (auto i : MTR[x]) {
+		in1 = dfs(i, in1)+1;
+		out = max(out, in1);
+	}
+		
+		++out;
+		tout[x] = out;
+		return out;
+}
+
+int answer(int u, int k){
+    if ((tin[u] <= tin[k]) && (tout[k] <= tout[u]))return 1;
+		else return 0;
+}
+
+};
+
+
+
+
+int main()
+{
+	int n, m, k,u,kor;
+	cin >> n;
+	Graph gr(n);
+	for (int i = 0; i < n; i++) {
+		cin >> u;
+		if (u == 0)kor = i;
+		else {
+			--u;
+			gr.add_edge(u,i);
+		}
+	}
+	gr.dfs(kor, 0);
+	cin >> m;
+	for (int i = 0; i < m; i++){
+		cin >> u >> k;
+		--u; --k;
+		cout << gr.answer(u,k) << endl;
+	}
+}

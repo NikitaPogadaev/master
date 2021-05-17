@@ -1,0 +1,436 @@
+#include<vector>
+#include <iostream>
+#include <algorithm>
+
+
+using namespace std;
+
+
+
+
+template <size_t Size>
+class FixedAllocator {
+private:
+    struct Node {
+        char place[Size];
+        Node* nxt;
+    };
+    Node* my;
+    vector<Node*>vec;
+    FixedAllocator() {
+        my = new Node[32];
+        vec.push_back(my);
+        for (int i = 0; i < 32; ++i)
+            my[i].nxt = &my[i + 1];
+        my[31].nxt = nullptr;
+    }
+public:
+    static FixedAllocator& global() {
+        static FixedAllocator m;
+        return m;
+    }
+    void* allocate() {
+        if(my==nullptr){
+
+            my = new Node[32];
+            vec.push_back(my);
+            for (int i = 0; i < 32; ++i)
+                my[i].nxt = &my[i + 1];
+            my[31].nxt = nullptr;
+        }
+        Node* result = my;
+        my = my->nxt;
+        return reinterpret_cast<void*>(result);
+    }
+    void deallocate(void* i) {
+        Node* m= reinterpret_cast<Node*>(i);
+        m->nxt = my;
+        my = m;
+    }
+    ~FixedAllocator() {
+        for(auto i:vec)
+            delete[]i;
+    }
+};
+
+template <typename T>
+class FastAllocator {
+public:
+
+    using pointer = T*;
+    using const_pointer = const T*;
+    using void_pointer = void*;
+    using const_void_pointer = const void*;
+    using value_type = T;
+    using reference = T&;
+    using const_reference = const T&;
+    using size_type = std::size_t;
+    FastAllocator() {
+    }
+    FastAllocator(const FastAllocator&) {
+    }
+    ~FastAllocator() {
+    }
+    template<typename X>
+    explicit operator FastAllocator<X>() const {
+        return FastAllocator<X>();
+    }
+    template <typename X>
+    struct rebind {
+        typedef FastAllocator<X> other;
+    };
+    bool operator ==(const FastAllocator& a) {
+        return true;
+    }
+    bool operator !=(const FastAllocator& a) {
+        return false;
+    }
+    pointer allocate(size_t n) {
+        if(n==1)
+            return reinterpret_cast<T*>(FixedAllocator<sizeof(T)>::global().allocate());
+        else
+            return std::allocator<T>().allocate(n);
+
+    }
+    void deallocate(pointer p, size_t n) {
+        if(n==1)
+            FixedAllocator<sizeof(T)>::global().deallocate(reinterpret_cast<void*>(p));
+        else
+            return std::allocator<T>().deallocate(p, n);
+    }
+    void destroy(pointer ptr) {
+        ptr->~T();
+    }
+    template<typename ...Args>
+    void construct(pointer p, const Args&... args) {
+        new (p) T(args...);
+    }
+};
+
+
+
+
+
+
+
+
+template<typename T, typename Alloc = std::allocator<T>>
+class List {
+private:
+    size_t sz = 0;
+
+
+    struct Node{
+        T value;
+        Node* prev;
+        Node* nxt;
+        Node(const T& value):value(value){}
+        Node(Node* p1, Node* p2):prev(p1), nxt(p2){}
+    };
+
+    Alloc alloc;
+    using AllocTraits = std::allocator_traits<Alloc>;
+    using Allocbind = typename std::allocator_traits<Alloc>::template rebind_alloc<Node>;
+    using Nodetraits = std::allocator_traits<Allocbind >;
+    Allocbind Nodealloc;
+    Node* kon;
+
+public:
+    size_t size() const{
+        return sz;
+    }
+    Alloc& get_allocator(){
+        return alloc;
+    }
+
+    explicit List(const Alloc& all = Alloc()){
+        alloc = all;
+        sz = 0;
+        kon = Nodetraits::allocate(Nodealloc, 1);
+        kon->prev = kon;
+        kon->nxt = kon;
+    }
+
+    List(List&& l){
+        kon = l.kon;
+        sz = l.sz;
+        l.sz = 0;
+        l.kon->prev = l.kon;
+        l.kon->nxt = l.kon;
+        alloc = l.alloc;
+    }
+
+
+
+
+
+
+    template<bool IsConst>
+    struct common_iterator {
+        using T_type = std::conditional_t<IsConst, const Node&, Node&>;
+        using T_ptr_type = std::conditional_t<IsConst, const Node*, Node*>;
+        using t_type = std::conditional_t<IsConst, const T&, T&>;
+        using t_ptr_type = std::conditional_t<IsConst, const T*, T*>;
+        using iterator_category = std::bidirectional_iterator_tag;
+        using value_type = T;
+        using pointer = t_ptr_type;
+        using reference = t_type;
+        using difference_type = std::ptrdiff_t;
+
+        Node*  ptr;
+
+        common_iterator(const common_iterator<false>& it){
+            ptr = it.ptr;
+        }
+
+        common_iterator(Node*  p) {
+            ptr = p;
+        }
+        t_type operator*() {
+            //cerr << "*" << endl;
+            return ptr->value;
+        }
+        t_ptr_type operator->() {
+            //cerr << "->" << endl;
+            return &(ptr->key);
+        }
+        common_iterator& operator++() {
+            ptr = ptr->nxt;
+            return *this;
+        }
+        common_iterator& operator--() {
+            ptr = ptr->prev;
+            return *this;
+        }
+        common_iterator operator++(int) {
+            common_iterator copy = *this;
+            ++(*this);
+            return copy;
+        }
+        common_iterator operator--(int) {
+            common_iterator copy = *this;
+            --(*this);
+            return (copy);
+        }
+        common_iterator& operator+=(int x) {
+            for (int i = 0; i < x; ++i)
+                ++(*this);
+            return *this;
+        }
+        common_iterator& operator-=(int x) {
+            for (int i = 0; i < x; ++i)
+                --(*this);
+            return *this;
+        }
+        common_iterator& operator+(int x) {
+            for (int i = 0; i < x; ++i)
+                ++(*this);
+            return *this;
+        }
+        bool operator== (const common_iterator<IsConst>& iter)const {
+            //cerr << "==const" << endl;
+            return ptr == iter.ptr;
+        }
+
+        bool operator!= (const common_iterator<IsConst>& iter)const {
+            //cerr << "!=const" << endl;
+            return !(*this == iter);
+        }
+
+    };
+    using iterator = common_iterator<false>;
+    using const_iterator = common_iterator<true>;
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+
+    reverse_iterator rend() {
+        //cerr << "rend" << endl;
+        return reverse_iterator(begin());
+    }
+    reverse_iterator rbegin() {
+        //cerr << "rbegin" << endl;
+        return reverse_iterator(end());
+    }
+    const_reverse_iterator crend() {
+        //cerr << "crend" << endl;
+        return const_reverse_iterator(cbegin());
+    }
+    const_reverse_iterator crbegin() {
+        //cerr << "crbegin" << endl;
+        return const_reverse_iterator(cend());
+    }
+
+
+    iterator begin()const {
+        //cerr << "beginc" << endl;
+        return iterator(kon->nxt);
+    }
+    iterator end() const {
+        //cerr << "endc" << endl;
+        iterator it(kon);
+        return it;
+    }
+    const_iterator cbegin()const {
+        //cerr << "cbeginc" << endl;
+        return const_iterator(kon->nxt);
+    }
+    const_iterator cend()const {
+        //cerr << "cendc" << endl;
+        const_iterator it(kon);
+        return it;
+    }
+    const_reverse_iterator rend() const {
+        return const_reverse_iterator(begin());
+    }
+    const_reverse_iterator rbegin()const {
+        return const_reverse_iterator(end());
+    }
+    const_reverse_iterator crend()const {
+        return const_reverse_iterator(cbegin());
+    }
+    const_reverse_iterator crbegin()const {
+        //cerr << "crbeginc" << endl;
+        return const_reverse_iterator(cend());
+    }
+
+
+    void insert(common_iterator<true> it, const T& value) {
+        Node* m = Nodetraits::allocate(Nodealloc, 1);
+        Nodetraits::construct(Nodealloc, m, value);
+        common_iterator<true> iter(it);
+        ++sz;
+        m->nxt  = iter.ptr;
+        m->prev = (iter.ptr)->prev;
+        ((iter.ptr)->prev)->nxt = m;
+        (iter.ptr)->prev = m;
+    }
+
+    void insert(common_iterator<false> it, const T& value) {
+        Node* m = Nodetraits::allocate(Nodealloc, 1);
+        Nodetraits::construct(Nodealloc, m, value);
+        common_iterator<false> iter(it);
+        ++sz;
+        m->nxt  = iter.ptr;
+        m->prev = (iter.ptr)->prev;
+        ((iter.ptr)->prev)->nxt = m;
+        (iter.ptr)->prev = m;
+    }
+
+
+    void erase(common_iterator<true> it){
+        common_iterator<true> iter(it);
+        --sz;
+        ((iter.ptr)->prev)->nxt = (iter.ptr)->nxt;
+        ((iter.ptr)->nxt)->prev = (iter.ptr)->prev;
+        Nodetraits ::destroy(Nodealloc,iter.ptr);
+        Nodetraits::deallocate(Nodealloc, iter.ptr, 1);
+    }
+
+    void erase(common_iterator<false> it){
+        common_iterator<false> iter(it);
+        --sz;
+        ((iter.ptr)->prev)->nxt = (iter.ptr)->nxt;
+        ((iter.ptr)->nxt)->prev = (iter.ptr)->prev;
+        Nodetraits ::destroy(Nodealloc,iter.ptr);
+        Nodetraits::deallocate(Nodealloc, iter.ptr, 1);
+    }
+
+
+    void push_back(const T& value){
+        insert(end(), value);
+    }
+    void push_front(const T& value){
+        insert(begin(), value);
+    }
+    void pop_back(){
+        erase(--end());
+    }
+    void pop_front(){
+        erase(begin());
+    }
+
+
+
+
+    List& operator=(const List& xl) {
+        if (this == &xl)
+            return *this;
+        if (Nodetraits::propagate_on_container_copy_assignment::value){
+            alloc = xl.alloc;
+            Nodealloc = xl.Nodealloc;
+        }
+        size_t temp = sz;
+        for (size_t i = 0; i < temp; ++i)
+            pop_back();
+        if (xl.sz> 0) {
+            for (auto  i  = xl.begin(); i != xl.end(); ++i) {
+                push_back(*i);
+            }
+        }
+        return *this;
+    }
+
+    List& operator=(List&& xl)noexcept {
+        if (this == &xl)
+            return *this;
+        if (Nodetraits::propagate_on_container_copy_assignment::value){
+            alloc = xl.alloc;
+            Nodealloc = xl.Nodealloc;
+        }
+        size_t temp = sz;
+        for (size_t i = 0; i < temp; ++i)
+            pop_back();
+        kon = xl.kon;
+        sz = xl.sz;
+        xl.sz = 0;
+        xl.kon->prev = xl.kon;
+        xl.kon->nxt = xl.kon;
+    }
+
+    List(size_t n, const T& value, const Alloc& all = Alloc()): List(all) {
+        alloc = all;
+        for (size_t i = 0; i < n; ++i) {
+            push_back(value);
+        }
+    }
+    List(size_t n, const Alloc& all = Alloc()): List(all){
+        sz = n;
+        alloc = all;
+        for(size_t i=0;i<n;++i){
+            Node* m = Nodetraits::allocate(Nodealloc, 1);
+            Nodetraits::construct(Nodealloc, m, kon->prev, kon);
+            (kon->prev)->nxt = m;
+            kon->prev = m;
+        }
+    }
+
+
+
+    List(const List& xl): List() {
+        sz = xl.sz;
+        alloc = AllocTraits::select_on_container_copy_construction(xl.alloc);
+        if (xl.sz> 0) {
+            for(auto i=xl.begin(); i!=xl.end(); ++i){
+                Node* m = Nodetraits::allocate(Nodealloc, 1);
+                Nodetraits ::construct(Nodealloc, m, *i);
+                m->prev = kon->prev;
+                m->nxt = kon;
+                (kon->prev)->nxt = m;
+                kon->prev = m;
+            }
+        }
+    }
+
+
+    ~List() {
+        //for (size_t i = 0; i < sz; ++i)
+        // pop_back();
+        size_t it = sz;
+        for (size_t i = 0; i <it; ++i) {
+            pop_back();
+        }
+    }
+
+};
+

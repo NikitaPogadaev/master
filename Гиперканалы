@@ -1,0 +1,82 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <set>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+
+class Graph
+{
+private:
+  vector < set < long long >>MTR;
+	map<pair<long long, long long>, bool> sm;
+public:
+
+    Graph (long long n)
+  {
+    MTR.resize (n);
+  }
+  vector < set < long long >>&get_list ()
+  {
+    return MTR;
+  }
+  void mark_false(long long a, long long b){
+      sm[{a, b}] = false;
+  }
+  void add_edge (long long a, long long b)
+  {
+    MTR[a].insert(b);
+  }
+ 
+ 
+void dfs3(long long x, vector<long long>& itog) {
+	long long k=0;
+	while (MTR[x].size() != 0) {
+		for (auto u : MTR[x]) {
+			if (!sm[{x, u}]) {
+				k = u;
+				sm[{x, u}] = true;
+				MTR[x].erase(u);
+				break;
+			}
+		}
+		dfs3(k, itog);
+	}
+	itog.push_back(x);
+}
+ 
+  
+  vector<long long> answer (long long k){
+      	vector<long long> itog;
+      	dfs3(k, itog);
+      	return itog;
+  }
+  
+  
+  
+
+};
+
+
+
+
+int main ()
+{
+long long n, m, u, k;
+	cin >> n >> k;
+	Graph gr(n+1);
+	for (long long i = 1; i <= n; ++i) 
+		for (long long j = 1; j <= n; ++j) {
+			cin >> u;
+			if (i != j && u == 0) {
+				gr.mark_false(i,j); 
+				gr.add_edge(i,j);
+			}
+		}
+	auto itog = gr.answer(k);
+	for (long long i = itog.size() - 1; i >0; i--) {
+		cout << itog[i] << " "<< itog[i - 1]<<endl;
+	}
+}

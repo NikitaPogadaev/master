@@ -1,0 +1,71 @@
+    #include <algorithm>
+    #include <vector>
+    #include <deque>
+    #include <string>
+    #include <map>
+    #include<set>
+    #include<iostream>
+    #include<utility>
+    
+    using namespace std;
+    pair<long long, vector<long long>> aqua(vector<vector<long long>>& MTR){
+        long long n = MTR.size();
+    long long inf = 2147483647;
+    long long  m, x, p=0,q=1;
+    
+    	vector<vector<pair<long long, long long>>> dp((1 << n), vector<pair<long long, long long>>(n, { inf, 0 }));
+    	for (int i = 0; i < n; i++) {
+    		dp[0][i] = { 0,0 };
+    		for (int j = 0; j < n; j++)
+    			dp[(1 << i)][j] = { 0,0 };
+    	}
+     
+    	for (int i = 2; i < (1 << n); i++) {
+    		for (int j = 0; j < n; j++) {
+    			if ((1 << j) & i) {
+    				long long mk = (i - (1 << j));
+    				for (int k = 0; k < n; k++) {
+    					if ((1 << k) & mk) {
+    						if (dp[i][j].first >= dp[mk][k].first + MTR[j][k]) {
+    							dp[i][j].first = dp[mk][k].first + MTR[j][k];
+    							dp[i][j].second = k;
+    						}
+    					}
+    				}
+    			}
+    		}
+    	}
+    	long long nm, maxi=inf, mas = (1 << n)-1;
+    	for (int i = 0; i < n; i++)
+    		if (maxi >= dp[(1 << n) - 1][i].first) {
+    			nm = i;
+    			maxi = dp[(1 << n)-1][i].first;
+    		}
+        vector<long long> itog;
+    	for (int i = 0; i < n; i++) {
+    		itog.push_back(nm+1);
+    		long long temp = nm;
+    		nm = dp[mas][nm].second;
+    		mas -= (1 << temp);
+    	}
+    	return {maxi,itog};
+    }
+     
+     
+    int main()
+    {
+    	std::ios::sync_with_stdio(false);
+    	std::cin.tie(nullptr);
+    	std::cout.tie(nullptr);
+    	long long n;
+    	cin >> n;
+    	vector<vector<long long>> MTR(n, vector<long long>(n, 0));
+    	for (int i = 0; i < n; i++)
+    		for (int j = 0; j < n; j++)
+    			cin >> MTR[i][j];
+     
+     auto kek = aqua(MTR);
+    	cout << kek.first << '\n';
+    	for (auto i:kek.second) 
+    		cout << i << " ";
+    }

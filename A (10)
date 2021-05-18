@@ -1,0 +1,81 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <set>
+#include <unordered_set>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+
+class Graph
+{
+private:
+  vector<vector<pair<long long, long long>>>MTR;  
+public:
+
+Graph() = default;
+    Graph (long long n)
+  {
+    MTR.resize (n);
+  }
+  vector<vector<pair<long long, long long>>>&get_list ()
+  {
+    return MTR;
+  }
+  void add_edge (long long a, long long b, long long l)
+  {
+            MTR[a-1].push_back({b-1, l});
+            MTR[b-1].push_back({a-1, l});
+  }
+ 
+ 
+  
+  long long MST (){    
+      long long sum1=0;
+      unordered_set<long long> ver;
+      ver.insert(0);
+      set<pair<long long, pair<long long, long long>>> reb;
+      for(auto i:MTR[0])reb.insert({i.second,{0,i.first}});
+      while(reb.size()>0){
+          auto it=reb.begin();
+          long long ver1=(*it).second.first, ver2=(*it).second.second,dl=(*it).first;
+          if(ver.find(ver1)==ver.end()){
+              sum1+=dl;
+              ver.insert(ver1);
+              for(auto i:MTR[ver1])reb.insert({i.second,{ver1,i.first}});
+          }
+          else if(ver.find(ver2)==ver.end()){
+            sum1+=dl;
+            ver.insert(ver2);
+              for(auto i:MTR[ver2])reb.insert({i.second,{ver2,i.first}});
+          }
+          else{
+              reb.erase(it);
+          }
+      }
+      return  sum1;
+  }
+  
+  
+  
+
+};
+
+
+
+
+         
+        int main()
+        {
+                     long long n, m, k,nach, kon;
+         cin >> n >> m;
+         Graph gr(n);
+         for(long long i=0;i<m;i++){
+             long long a, b, l;
+             cin >> a >> b >> l;
+             gr.add_edge(a,b,l);
+         }
+         cout << gr.MST();
+         
+        }

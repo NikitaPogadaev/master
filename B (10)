@@ -1,0 +1,105 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <set>
+#include <unordered_set>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+
+class Graph
+{
+private:
+               struct reb{
+                int x;
+                int y;
+                int dl;
+               };
+  vector<reb>MTR;  
+    vector<int>rod;
+    vector<int>siz;
+   static bool cmp(reb a, reb b){
+                   return a.dl<b.dl;                    
+                }
+    int find(int a){
+     if(a==rod[a]){
+      return a;   
+     }
+     else{
+         return rod[a]=find(rod[a]);
+     }
+    }
+    void un(int a,int b){
+     a=find(a);
+     b=find(b);
+     if(a!=b){
+      if (siz[a] < siz[b])
+			swap (a, b);
+		rod[b] = a;
+		siz[a] += siz[b];   
+     }
+    }
+public:
+
+Graph() = default;
+    Graph (long long n)
+  {
+    MTR.resize (n);
+    rod.clear();
+    siz.clear();
+    for(int i=0;i<n;i++){
+         rod.push_back(i);
+         siz.push_back(1);
+     }
+  }
+  vector<reb>&get_list ()
+  {
+    return MTR;
+  }
+  void add_edge (long long a, long long b, long long l)
+  {
+                         reb temp0;
+                    temp0.x=a;
+                    temp0.y=b;
+                    temp0.dl=l;
+                    MTR.push_back(temp0);
+  }
+ 
+ 
+  
+  int MST (){    
+      long long sum1=0;
+                    sort(MTR.begin(),MTR.end(),cmp); 
+              
+              for(auto i:MTR){
+               if(find(i.x)!=find(i.y)){
+                  sum1+=i.dl; 
+                  un(i.x,i.y);
+               }
+              }
+      return  sum1;
+  }
+  
+  
+  
+
+};
+
+
+
+
+         
+        int main()
+        {
+                     long long n, m, k;
+         cin >> n >> m;
+         Graph gr(n);
+         for(long long i=0;i<m;i++){
+             long long a, b, l;
+             cin >> a >> b >> l;
+             gr.add_edge(a-1,b-1,l);
+         }
+         cout << gr.MST();
+         
+        }
